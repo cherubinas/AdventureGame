@@ -10,6 +10,7 @@ public class Platform {
         this.height = height;
     }
     
+    
 
     public void render(Graphics g) {
         g.setColor(Color.GRAY);
