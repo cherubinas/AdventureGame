@@ -8,7 +8,7 @@
             "type": "java",
             "name": "Main",
             "request": "launch",
-            "mainClass": "Main",
+            "mainClass": "AdventureGame.Main", // Update this to the fully qualified name of your main class
             "projectName": "game_project_aeab233c"
         },
         {
@@ -21,7 +21,7 @@
             "type": "java",
             "name": "GameMain",
             "request": "launch",
-            "mainClass": "GameMain",
+            "mainClass": "AdventureGame.GameMain", // Update this to the fully qualified name of your main class
             "projectName": "game_project_aeab233c"
         }
     ]

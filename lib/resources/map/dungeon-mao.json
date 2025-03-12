@@ -1,0 +1,33 @@
+{
+    "dungeon": {
+      "width": 800,
+      "height": 600,
+      "platforms": [
+        {
+          "id": "platform1",
+          "x": 100,
+          "y": 500,
+          "width": 200,
+          "height": 20
+        },
+        {
+          "id": "platform2",
+          "x": 400,
+          "y": 400,
+          "width": 150,
+          "height": 20
+        },
+        {
+          "id": "platform3",
+          "x": 600,
+          "y": 300,
+          "width": 250,
+          "height": 20
+        }
+      ],
+      "spawnPoint": {
+        "x": 50,
+        "y": 450
+      }
+    }
+  }
