@@ -9,7 +9,6 @@ public class Platform {
         this.width = width;
         this.height = height;
     }
-    
 
     public void render(Graphics g) {
         g.setColor(Color.GRAY);
@@ -18,5 +17,18 @@ public class Platform {
 
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
+    }
+
+    // Add these getter methods 👇
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {  // Add getY() so the enemy knows the platform's height
+        return y;
+    }
+
+    public int getWidth() {
+        return width;
     }
 }

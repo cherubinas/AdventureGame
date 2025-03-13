@@ -1,28 +1,19 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "type": "java",
-            "name": "Main",
-            "request": "launch",
-            "mainClass": "AdventureGame.Main", // Update this to the fully qualified name of your main class
-            "projectName": "game_project_aeab233c"
-        },
-        {
-            "type": "java",
-            "name": "Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
             "name": "GameMain",
             "request": "launch",
-            "mainClass": "AdventureGame.GameMain", // Update this to the fully qualified name of your main class
-            "projectName": "game_project_aeab233c"
+            "mainClass": "GameMain",
+            "projectName": "AdventureGame_7709620f"
+        },
+        {
+            "type": "java",
+            "name": "Launch GameMain",
+            "request": "launch",
+            "mainClass": "com.game.GameMain",
+            "projectName": "AdventureGame_7709620f"
         }
     ]
 }

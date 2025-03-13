@@ -32,7 +32,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
 
         // Initialize enemies
         enemies = new ArrayList<>();
-        enemies.add(new Enemy(500, 400, this));
+        enemies.add(new Enemy(500, 450, this));
 
         // Game loop for movement and physics
         gameLoop = new Timer(16, this); // Approximately 60 FPS
@@ -41,6 +41,10 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
 
     public void removeEnemy(Enemy enemy) {
         enemies.remove(enemy);
+    }
+
+    public List<Enemy> getEnemies() {
+        return enemies;
     }
 
     @Override
@@ -70,7 +74,16 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         g.setColor(Color.GRAY);
         g.fillRect(floor.x, floor.y, floor.width, floor.height);
     }
-
+    public void checkPlayerAttack() {
+        for (Enemy enemy : enemies) {
+            if (player.getBounds().intersects(enemy.getBounds())) {
+                player.attack(enemy);
+            }
+        }
+    }
+    public List<Platform> getPlatforms() {
+        return platforms;
+    }
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
@@ -81,7 +94,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
             case KeyEvent.VK_SPACE -> player.jump();
             case KeyEvent.VK_SHIFT -> player.dash();
             case KeyEvent.VK_F -> player.attack();
-            case KeyEvent.VK_H -> player.takeHit(1); // Pass an integer argument
+            case KeyEvent.VK_H -> player.takeHit(10); // Press H to test player taking damage
         }
     }
 
@@ -97,10 +110,10 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
     @Override
     public void actionPerformed(ActionEvent e) {
         player.update(platforms, floor);
-        repaint();
         for (Enemy enemy : enemies) {
             enemy.update(player);
         }
+        repaint();
     }
 
     @Override
@@ -140,8 +153,3 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         this.gameOver = gameOver;
     }
 }
-
-
-
-
-

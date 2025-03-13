@@ -82,9 +82,9 @@ public class Player {
                 currentState = "idle";
             }
         }
-        if (velocityY < 0) { 
+        if (velocityY < 0) {
             currentState = "jump";  // Going up = Jump animation
-        } else if (velocityY > 0) { 
+        } else if (velocityY > 0) {
             currentState = "fall";  // Going down = Fall animation
         }
         if (isHit) {
@@ -95,7 +95,21 @@ public class Player {
                 isHit = false;
             }
         }
-    
+        if (hitTimer > 0) {
+            hitTimer--;
+            if (hitTimer == 0) {
+                isHit = false;
+                currentState = "idle"; // Reset state when animation finishes
+            }
+        }
+        if (isDead) {
+            if (currentFrame < animations.get("death").size() - 1) {
+                currentFrame++; // Progress death animation
+            }
+            return; // Stop further updates
+        }
+
+
         if (isDashing) {
             if (dashTimer > 0) {
                 x += facingRight ? DASH_SPEED : -DASH_SPEED;
@@ -106,17 +120,17 @@ public class Player {
                 currentState = "idle";
             }
         }
-    
+
         if (!isDashing && !isAttacking) {
             velocityY += GRAVITY;
             y += velocityY;
             onGround = false;
-    
+
             // Platform collision handling
             for (Platform platform : platforms) {
                 Rectangle platformBounds = platform.getBounds();
                 Rectangle futureBounds = new Rectangle(x, y + velocityY, width, height);
-    
+
                 if (futureBounds.intersects(platformBounds)) {
                     if (velocityY > 0) { // Falling
                         y = platformBounds.y - height;
@@ -130,7 +144,7 @@ public class Player {
                     }
                 }
             }
-    
+
             // Floor collision
             if (y + height >= floor.y) {
                 y = floor.y - height;
@@ -139,7 +153,7 @@ public class Player {
                 isFalling = false;
                 onGround = true;
             }
-    
+
             // Prevent horizontal movement while colliding with platforms
             x += dx;
             for (Platform platform : platforms) {
@@ -153,11 +167,11 @@ public class Player {
             if (x < 0) x = 0;
             if (x + width > floor.width) x = floor.width - width;
         }
-    
+
         if (dashCooldownTimer > 0) {
             dashCooldownTimer--;
         }
-    
+
         if (!isAttacking && !isDashing && animations.containsKey(currentState)) {
             currentFrame = (currentFrame + 1) % animations.get(currentState).size();
         }
@@ -213,33 +227,44 @@ public class Player {
         }
     }
 
+    private int hitTimer = 0; // Timer for hit animation duration
+
     public void takeHit(int damage) {
-        if (isDead) return; // Prevent further hits after death
-    
+        if (isDead || hitTimer > 0) return; // Prevent multiple triggers
+
         health -= damage;
         if (health <= 0) {
             health = 0;
             die();
         } else {
-            // Apply knockback
-            dx = facingRight ? -10 : 10;
+            dx = facingRight ? -10 : 10; // Apply knockback
             isHit = true;
+            hitTimer = 20; // Set a timer so animation plays only once
+            currentState = "hit";
+            currentFrame = 0;
         }
     }
-    
-
     public void die() {
-        if (isDead) return; // Prevent redundant death call
-    
+        if (isDead) return;
+
         isDead = true;
         currentState = "death";
-    
-        SwingUtilities.invokeLater(() -> {
-            GamePanel ancestorGamePanel = (GamePanel) SwingUtilities.getAncestorOfClass(GamePanel.class, gamePanel);
-            if (gamePanel != null) {
-                gamePanel.setGameOver(true);
-            }
-        });
+        currentFrame = 0;
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(1500); // Wait for the animation to complete
+            } catch (InterruptedException ignored) {}
+
+            SwingUtilities.invokeLater(() -> {
+                if (gamePanel != null) {
+                    gamePanel.setGameOver(true);
+                }
+            });
+        }).start();
+    }
+    public void attack(Enemy enemy) {
+        enemy.takeDamage(50); // Assuming each attack deals 10 damage
     }
 
     public Rectangle getBounds() {

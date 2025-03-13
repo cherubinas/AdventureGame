@@ -27,7 +27,7 @@ public class MainMenu {
         titleLabel.setShadowOffset(2, 4); // X offset 2, Y offset 4
 
         // Background setup
-        ImageIcon backgroundImage = new ImageIcon("AdventureGame/lib/photos/bg.gif");
+        ImageIcon backgroundImage = new ImageIcon("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\photos\\bg.gif");
         BackgroundPanel background = new BackgroundPanel(backgroundImage.getImage());
         background.setLayout(new GridBagLayout());
 
@@ -106,7 +106,7 @@ public class MainMenu {
 
     private void loadCustomFont() {
         try {
-            File fontFile = new File("AdventureGame/lib/font/3.otf"); // Replace with your font's path
+            File fontFile = new File("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\font\\3.otf"); // Replace with your font's path
             customFont = Font.createFont(Font.TRUETYPE_FONT, new FileInputStream(fontFile));
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             ge.registerFont(customFont); // Register the font system-wide
