@@ -93,7 +93,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
             case KeyEvent.VK_D, KeyEvent.VK_RIGHT -> player.moveRight();
             case KeyEvent.VK_SPACE -> player.jump();
             case KeyEvent.VK_SHIFT -> player.dash();
-            case KeyEvent.VK_F -> player.attack();
+            case KeyEvent.VK_F -> player.attack(enemies);
             case KeyEvent.VK_H -> player.takeHit(10); // Press H to test player taking damage
         }
     }
@@ -121,13 +121,14 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
 
     @Override
     public void mousePressed(MouseEvent e) {
-        player.handleMouseInput(e);
+        player.handleMouseInput(e, enemies); // Pass the enemies list
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        player.handleMouseInput(e);
+        player.handleMouseInput(e, enemies); // Pass the enemies list
     }
+
 
     @Override
     public void mouseEntered(MouseEvent e) {}

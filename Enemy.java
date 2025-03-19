@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Enemy {
     private int x, y, width, height;
@@ -32,7 +33,36 @@ public class Enemy {
         this.height = 50;
         this.patrolStartX = x;
         this.gamePanel = gamePanel;
-        this.animations = AnimationLoader.loadAllAnimations();
+        HashMap<String, AnimationLoader.AnimationData> animationDataMap = AnimationLoader.loadAllAnimations();
+        this.animations = new HashMap<>();
+
+        for (String key : animationDataMap.keySet()) {
+            this.animations.put(key, animationDataMap.get(key).frames); // Extract frames only
+        }
+    }
+    private boolean isCollidingWithPlatform(int newX, int newY) {
+        for (Platform platform : gamePanel.getPlatforms()) {
+            Rectangle platformBounds = platform.getBounds();
+            Rectangle enemyBounds = new Rectangle(newX, newY, width, height);
+
+            // Check if enemy is inside platform bounds
+            if (enemyBounds.intersects(platformBounds)) {
+                // If enemy is below the platform, prevent getting stuck
+                if (newY + height - 5 < platform.getY()) {
+                    y = platform.getY() - height; // Place enemy on top of the platform
+                    return true;
+                }
+
+                // If enemy is hitting the bottom of the platform, push it down
+                if (newY < platform.getY() + platform.getHeight()) {
+                    y += 5;
+                    return true;
+                }
+
+                return true;
+            }
+        }
+        return false;
     }
 
     public void update(Player player) {
@@ -43,10 +73,9 @@ public class Enemy {
         int distanceToPlayer = Math.abs(playerX - x);
         int verticalDistanceToPlayer = Math.abs(playerY - y);
 
-        // NEW: If the player is directly above or below, set idle animation
         if (distanceToPlayer < 10 && verticalDistanceToPlayer > 30) {
             currentAnimation = "enemy_idle";
-            return; // Stop further updates to avoid twitching
+            return;
         }
 
         if (distanceToPlayer < ATTACK_RANGE && verticalDistanceToPlayer < 30) {
@@ -59,14 +88,12 @@ public class Enemy {
 
         if (!isAttacking) {
             if (chasingPlayer) {
-                if (playerX > x) {
-                    x += speed;
-                    facingRight = true;
-                } else {
-                    x -= speed;
-                    facingRight = false;
+                int newX = x + (playerX > x ? speed : -speed);
+                if (!isCollidingWithPlatform(newX, y)) {
+                    x = newX;
+                    facingRight = playerX > x;
+                    currentAnimation = "enemy_run";
                 }
-                currentAnimation = "enemy_run";
             } else {
                 patrol();
             }
@@ -117,9 +144,19 @@ public class Enemy {
     }
 
     private void die() {
-        isDead = true;
-        currentAnimation = "enemy_death";
-        gamePanel.removeEnemy(this);
+        currentAnimation = "enemy_death"; // Set death animation
+        frameIndex = 0; // Start from the first frame
+
+        // Calculate death animation time (based on frame count)
+        int deathAnimationTime = animations.get("enemy_death").size() * animationSpeed * 16; // 16ms per frame
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(deathAnimationTime); // Wait for the animation to complete
+            } catch (InterruptedException ignored) {}
+
+            gamePanel.removeEnemy(this); // Remove enemy after animation
+        }).start();
     }
 
     private void updateAnimation() {
@@ -128,16 +165,17 @@ public class Enemy {
             animationCounter = 0;
             frameIndex++;
 
-            // Reset frameIndex after animation finishes
+            // If animation reaches the last frame of enemy_death, then remove enemy
+            if (currentAnimation.equals("enemy_death") && frameIndex >= animations.get(currentAnimation).size()) {
+                gamePanel.removeEnemy(this);
+                return; // Stop further updates
+            }
+
+            // Loop other animations if needed
             if (frameIndex >= animations.get(currentAnimation).size()) {
                 frameIndex = 0;
 
-                // After death animation finishes, remove enemy
-                if (currentAnimation.equals("enemy_death")) {
-                    gamePanel.removeEnemy(this);
-                }
-
-                // After hurt animation, go back to idle or run
+                // After hurt animation, return to idle or run
                 if (currentAnimation.equals("enemy_hurt")) {
                     currentAnimation = chasingPlayer ? "enemy_run" : "enemy_idle";
                 }
@@ -148,7 +186,14 @@ public class Enemy {
     public void render(Graphics g) {
         if (isDead) return;
 
-        BufferedImage frame = animations.get(currentAnimation).get(frameIndex);
+        // Validate animation list
+        if (!animations.containsKey(currentAnimation)) return;
+
+        List<BufferedImage> frames = animations.get(currentAnimation);
+
+        if (frameIndex < 0 || frameIndex >= frames.size()) return; // Ensure valid index
+
+        BufferedImage frame = frames.get(frameIndex);
 
         // Flip image if facing left
         if (!facingRight) {

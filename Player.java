@@ -49,7 +49,12 @@ public class Player {
         this.dy = 0;
         this.onGround = false;
         this.gamePanel = gamePanel;
-        animations = AnimationLoader.loadAllAnimations();
+        HashMap<String, AnimationLoader.AnimationData> animationDataMap = AnimationLoader.loadAllAnimations();
+        this.animations = new HashMap<>();
+
+        for (String key : animationDataMap.keySet()) {
+            this.animations.put(key, animationDataMap.get(key).frames); // Extract frames only
+        }
         ATTACK_FRAMES = animations.containsKey("attack") ? animations.get("attack").size() : 1;
     }
 
@@ -68,7 +73,13 @@ public class Player {
             g.drawRect(x, y - 10, width, 5);
             g.setColor(Color.GREEN);
             g.fillRect(x, y - 10, (int) ((width * (health / 100.0))), 5);
+            // Draw bounding box (collision box)
+            g.setColor(new Color(255, 0, 0, 200)); // Red with slight transparency
+            g.drawRect(x, y, width, height);
+
+
         }
+
     }
 
     public void update(List<Platform> platforms, Rectangle floor) {
@@ -177,6 +188,15 @@ public class Player {
         }
     }
 
+    public Rectangle getAttackHitbox() {
+        int attackWidth = 50; // Adjust this based on weapon range
+        int attackHeight = height; // Same as player's height
+        int attackX = facingRight ? x + width : x - attackWidth; // Position it in front
+        int attackY = y;
+
+        return new Rectangle(attackX, attackY, attackWidth, attackHeight);
+    }
+
     public void moveLeft() {
         if (!isDashing && !isAttacking) {
             dx = -SPEED;
@@ -215,15 +235,19 @@ public class Player {
         }
     }
 
-    public void attack() {
+    public void attack(List<Enemy> enemies) {
         if (!isAttacking) {
             isAttacking = true;
             attackTimer = ATTACK_DURATION;
             currentState = "attack";
             currentFrame = 0;
-            attackFrameIndex = 0;
-            lastXAfterAttack = x;
-            lastYAfterAttack = y;
+
+            Rectangle attackHitbox = getAttackHitbox();
+            for (Enemy enemy : enemies) {
+                if (attackHitbox.intersects(enemy.getBounds())) {
+                    enemy.takeDamage(10);
+                }
+            }
         }
     }
 
@@ -244,6 +268,7 @@ public class Player {
             currentFrame = 0;
         }
     }
+
     public void die() {
         if (isDead) return;
 
@@ -254,7 +279,8 @@ public class Player {
         new Thread(() -> {
             try {
                 Thread.sleep(1500); // Wait for the animation to complete
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException ignored) {
+            }
 
             SwingUtilities.invokeLater(() -> {
                 if (gamePanel != null) {
@@ -263,6 +289,7 @@ public class Player {
             });
         }).start();
     }
+
     public void attack(Enemy enemy) {
         enemy.takeDamage(50); // Assuming each attack deals 10 damage
     }
@@ -279,11 +306,11 @@ public class Player {
         return y;
     }
 
-    public void handleMouseInput(MouseEvent e) {
+    public void handleMouseInput(MouseEvent e, List<Enemy> enemies) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (e.getID() == MouseEvent.MOUSE_PRESSED) {
                 if (!mousePressed) {
-                    attack();
+                    attack(enemies); // Pass enemies list
                     mousePressed = true;
                 }
             } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
