@@ -51,6 +51,15 @@ public class MainMenu {
             frame.dispose();
             new GameWindow().startGame();
         });
+        continueButton.addActionListener(e -> {
+            GameState savedState = SaveManager.loadGame();
+            if (savedState != null) {
+                frame.dispose();
+                new GameWindow().loadGame(savedState);
+            } else {
+                JOptionPane.showMessageDialog(frame, "No saved game found!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         exitButton.addActionListener(e -> System.exit(0));
         rulesButton.addActionListener(e -> showRulesPage());
@@ -87,7 +96,7 @@ public class MainMenu {
     private JButton createTextButton(String text) {
         JButton button = new JButton(text);
         button.setForeground(Color.WHITE);
-        
+
         if (customFont != null) {
             button.setFont(customFont.deriveFont(22.0f));
         } else {
@@ -98,7 +107,7 @@ public class MainMenu {
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         button.setHorizontalAlignment(SwingConstants.LEFT); // Align text inside button to the left
 
         return button;

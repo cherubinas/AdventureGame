@@ -1,10 +1,11 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Enemy {
+public class Enemy implements Serializable {
     private int x, y, width, height;
     private int speed = 2;
     private int health = 50;
@@ -17,14 +18,15 @@ public class Enemy {
     private final int ATTACK_RANGE = 40;
     private final int CHASE_RANGE = 200;
     private final int DAMAGE = 10;
-    private GamePanel gamePanel;
+    private transient GamePanel gamePanel;
 
-    private HashMap<String, ArrayList<BufferedImage>> animations;
+    private transient HashMap<String, ArrayList<BufferedImage>> animations;
     private String currentAnimation = "enemy_idle";
     private int frameIndex = 0;
     private int animationSpeed = 2;
     private int animationCounter = 0;
     private boolean facingRight = true; // Track enemy facing direction
+
 
     public Enemy(int x, int y, GamePanel gamePanel) {
         this.x = x;
@@ -40,6 +42,7 @@ public class Enemy {
             this.animations.put(key, animationDataMap.get(key).frames); // Extract frames only
         }
     }
+
     private boolean isCollidingWithPlatform(int newX, int newY) {
         for (Platform platform : gamePanel.getPlatforms()) {
             Rectangle platformBounds = platform.getBounds();
@@ -143,7 +146,7 @@ public class Enemy {
         }
     }
 
-    private void die() {
+    void die() {
         currentAnimation = "enemy_death"; // Set death animation
         frameIndex = 0; // Start from the first frame
 
@@ -216,4 +219,39 @@ public class Enemy {
     public int getX() {
         return x;
     }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setState(int x, int y, int health) {
+        this.x = x;
+        this.y = y;
+        this.health = health;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+    public class EnemyState implements Serializable {
+        public int x, y;
+        public int health;
+        public boolean isDead;
+
+        public EnemyState(int x, int y, int health, boolean isDead) {
+            this.x = x;
+            this.y = y;
+            this.health = health;
+            this.isDead = isDead;
+        }
+
+        public int getX() { return x; }
+        public int getY() { return y; }
+        public int getHealth() { return health; }
+        public boolean isDead() { return isDead; }
+    }
+    public EnemyState getState() {
+        return new EnemyState(x, y, health, isDead);
+    }
+
 }

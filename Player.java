@@ -1,6 +1,11 @@
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -76,10 +81,7 @@ public class Player {
             // Draw bounding box (collision box)
             g.setColor(new Color(255, 0, 0, 200)); // Red with slight transparency
             g.drawRect(x, y, width, height);
-
-
         }
-
     }
 
     public void update(List<Platform> platforms, Rectangle floor) {
@@ -119,7 +121,6 @@ public class Player {
             }
             return; // Stop further updates
         }
-
 
         if (isDashing) {
             if (dashTimer > 0) {
@@ -290,10 +291,6 @@ public class Player {
         }).start();
     }
 
-    public void attack(Enemy enemy) {
-        enemy.takeDamage(50); // Assuming each attack deals 10 damage
-    }
-
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
     }
@@ -304,6 +301,14 @@ public class Player {
 
     public int getY() {
         return y;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public void setHealth(int health) {
+        this.health = health;
     }
 
     public void handleMouseInput(MouseEvent e, List<Enemy> enemies) {
@@ -317,5 +322,67 @@ public class Player {
                 mousePressed = false;
             }
         }
+    }
+
+    // --- SAVE & LOAD FUNCTIONS ---
+
+    public void savePlayerState(String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(x + "," + y + "," + health);
+        } catch (IOException e) {
+            System.err.println("Error saving player state: " + e.getMessage());
+        }
+    }
+
+    public void loadPlayerState(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line = reader.readLine();
+            if (line != null) {
+                String[] parts = line.split(",");
+                x = Integer.parseInt(parts[0]);
+                y = Integer.parseInt(parts[1]);
+                health = Integer.parseInt(parts[2]);
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading player state: " + e.getMessage());
+        }
+    }
+    public void setPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject(); // Load normal fields
+
+        // Restore animations after loading
+        HashMap<String, AnimationLoader.AnimationData> animationDataMap = AnimationLoader.loadAllAnimations();
+        this.animations = new HashMap<>();
+        for (String key : animationDataMap.keySet()) {
+            this.animations.put(key, animationDataMap.get(key).frames); // Extract frames only
+        }
+    }
+    public void reset() {
+        x = 250;
+        y = 300;
+        dx = 0;
+        dy = 0;
+        velocityY = 0;
+        health = 100;
+        currentFrame = 0;
+        currentState = "idle";
+        isJumping = false;
+        isFalling = false;
+        isAttacking = false;
+        isDashing = false;
+        isHit = false;
+        isDead = false;
+        dashTimer = 0;
+        dashCooldownTimer = 0;
+        attackTimer = 0;
+        attackFrameIndex = 0;
+        hitTimer = 0;
+        mousePressed = false;
+        facingRight = true;
     }
 }
