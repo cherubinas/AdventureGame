@@ -55,6 +55,8 @@ public class GameOverScreen extends JPanel {
     public void showGameOverScreen() {
         setVisible(true);
         repaint();
+        System.out.println("🎮 Showing game over screen...");
+        MusicPlayer.playSound("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\gameover.wav");
     }
 
     @Override

@@ -6,10 +6,17 @@ import javafx.embed.swing.JFXPanel; // Make sure to import this!
 public class GameWindow {
     private GamePanel gamePanel;
     private JFrame gameFrame;
-    private MusicPlayer musicPlayer;
+    private  static  MusicPlayer musicPlayer;
 
     // Start a new game from scratch
     public void startGame() {
+        // ✅ Initialize JavaFX (only once)
+        new JFXPanel();
+
+        // ✅ Start background music
+        musicPlayer = new MusicPlayer("C:/Users/eveli/Desktop/New folder (3)/AdventureGame/lib/music/kim-lightyear-leave-the-world-tonight-chiptune-edit-loop-132102.mp3");
+        musicPlayer.play();
+
         gameFrame = new JFrame("Game Screen");
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gameFrame.setSize(1200, 600);
@@ -22,22 +29,15 @@ public class GameWindow {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 saveGameProgress();
-
-                // ✅ Initialize JavaFX before creating MediaPlayer
-                new JFXPanel();
-
-                // Add a short delay to let JavaFX runtime boot
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-
-                musicPlayer = new MusicPlayer("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\kim-lightyear-leave-the-world-tonight-chiptune-edit-loop-132102.mp3");
-                musicPlayer.play();
             }
         });
+
         gameFrame.setVisible(true);
     }
 
     // Load a saved game
     public void loadGame(GameState savedState) {
+
         gameFrame = new JFrame("Game Screen");
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gameFrame.setSize(800, 600);
@@ -52,9 +52,15 @@ public class GameWindow {
         }
 
         gameFrame.add(gamePanel);
-        gameFrame.setVisible(true);
-    }
 
+        // 🆕 Start music just like in startGame
+        new JFXPanel();
+        musicPlayer = new MusicPlayer("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\kim-lightyear-leave-the-world-tonight-chiptune-edit-loop-132102.mp3");
+        musicPlayer.play();
+
+        gameFrame.setVisible(true);
+
+    }
     // Save the game progress
     public void saveGameProgress() {
         if (gamePanel != null) {

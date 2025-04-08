@@ -79,7 +79,7 @@ public class Player {
             g.setColor(Color.GREEN);
             g.fillRect(x, y - 10, (int) ((width * (health / 100.0))), 5);
             // Draw bounding box (collision box)
-            g.setColor(new Color(255, 0, 0, 200)); // Red with slight transparency
+            g.setColor(new Color(255, 0, 0, 250)); // Red with slight transparency
             g.drawRect(x, y, width, height);
         }
     }
@@ -246,6 +246,7 @@ public class Player {
             Rectangle attackHitbox = getAttackHitbox();
             for (Enemy enemy : enemies) {
                 if (attackHitbox.intersects(enemy.getBounds())) {
+                    MusicPlayer.playSound("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\attack.mp3");
                     enemy.takeDamage(10);
                 }
             }
@@ -271,11 +272,13 @@ public class Player {
     }
 
     public void die() {
+
         if (isDead) return;
 
         isDead = true;
         currentState = "death";
         currentFrame = 0;
+        MusicPlayer.playSound("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\gameover.mp3");
 
         new Thread(() -> {
             try {

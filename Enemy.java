@@ -147,8 +147,12 @@ public class Enemy implements Serializable {
     }
 
     void die() {
+        isDead = true;
+
+        MusicPlayer.playSound("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\kill.wav");
         currentAnimation = "enemy_death"; // Set death animation
         frameIndex = 0; // Start from the first frame
+
 
         // Calculate death animation time (based on frame count)
         int deathAnimationTime = animations.get("enemy_death").size() * animationSpeed * 16; // 16ms per frame

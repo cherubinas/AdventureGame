@@ -103,6 +103,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
             Enemy enemy = new Enemy(enemyState.getX(), enemyState.getY(), this);
             enemy.setState(enemyState.getX(), enemyState.getY(), enemyState.getHealth());
             if (enemyState.isDead()) {
+
                 enemy.die();
             }
             enemies.add(enemy);
@@ -145,8 +146,9 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
 
         JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
         pauseMenu = new PauseMenu(
+
                 frame,
-                () -> player.savePlayerState("savefile.txt"),  // Save callback
+                () -> SaveManager.saveGame(createGameState()),  // Save callback
                 () -> System.exit(0),                          // Quit callback
                 () -> closePauseMenu(frame)                         // Resume callback
         );
@@ -262,9 +264,13 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
     public void setGameOver(boolean gameOver) {
         this.gameOver = gameOver;
         if (gameOver) {
+
             gameOverScreen.setBounds(0, 0, getWidth(), getHeight()); // Make sure it resizes
+            // 👈 handles the sound + repaint
             gameOverScreen.setVisible(true);
-            this.repaint();
+            gameOverScreen.showGameOverScreen();
+
+
         }
         addComponentListener(new ComponentAdapter() {
             @Override
