@@ -14,8 +14,8 @@ public class GameWindow {
         new JFXPanel();
 
         // ✅ Start background music
-        musicPlayer = new MusicPlayer("C:/Users/eveli/Desktop/New folder (3)/AdventureGame/lib/music/kim-lightyear-leave-the-world-tonight-chiptune-edit-loop-132102.mp3");
-        musicPlayer.play();
+       // musicPlayer = new MusicPlayer("C:/Users/eveli/Desktop/New folder (3)/AdventureGame/lib/music/kim-lightyear-leave-the-world-tonight-chiptune-edit-loop-132102.mp3");
+        //musicPlayer.play();
 
         gameFrame = new JFrame("Game Screen");
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

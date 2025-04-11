@@ -91,51 +91,100 @@ public class Enemy implements Serializable {
 
         if (!isAttacking) {
             if (chasingPlayer) {
-                int newX = x + (playerX > x ? speed : -speed);
-                if (!isCollidingWithPlatform(newX, y)) {
+                int direction = (playerX > x) ? 1 : -1;
+                int newX = x + direction * speed;
+
+                if (!isCollidingWithPlatform(newX, y) && hasGroundBelow(newX)) {
                     x = newX;
-                    facingRight = playerX > x;
+                    facingRight = direction > 0;
                     currentAnimation = "enemy_run";
                 }
             } else {
                 patrol();
             }
         }
+        boolean standingOnPlatform = false;
 
+// Check if there's a platform just below
+        for (Platform platform : gamePanel.getPlatforms()) {
+            Rectangle enemyFeet = new Rectangle(x, y + height, width, 5); // 5px "feet"
+            if (enemyFeet.intersects(platform.getBounds())) {
+                // Snap to the top of the platform
+                y = platform.getY() - height;
+                standingOnPlatform = true;
+                break;
+            }
+        }
+
+// If not on a platform, apply gravity
+        if (!standingOnPlatform) {
+            y += 5; // gravity pull
+        }
         updateAnimation();
+    }
+    private boolean isOnPlatform(int x, int y) {
+        Rectangle enemyBounds = new Rectangle(x, y + height, width, 1); // check feet
+        for (Platform platform : gamePanel.getPlatforms()) {
+            if (enemyBounds.intersects(platform.getBounds())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void patrol() {
-        x += speed * patrolDirection;
-        if (Math.abs(x - patrolStartX) > patrolDistance) {
+        int newX = x + speed * patrolDirection;
+
+        if (!hasGroundBelow(newX)) {
             patrolDirection *= -1;
-            facingRight = (patrolDirection > 0); // Flip direction
+            facingRight = (patrolDirection > 0);
+            return;
         }
-        currentAnimation = "enemy_run"; // Use walk animation instead of idle
+
+        if (!isCollidingWithPlatform(newX, y)) {
+            x = newX;
+        }
+
+        currentAnimation = "enemy_run";
     }
+    private boolean hasGroundBelow(int newX) {
+        int checkX = newX + width / 2;
+        int checkY = y + height + 1;
 
-    private void attack(Player player) {
-        if (!isAttacking) {
-            isAttacking = true;
-            currentAnimation = "enemy_attack";
-            facingRight = player.getX() > x;
-
-            // Calculate how long the animation should take based on frame count
-            int attackAnimationTime = animations.get("enemy_attack").size() * animationSpeed * 16; // 16ms per frame
-
-            new Thread(() -> {
-                try {
-                    Thread.sleep(attackAnimationTime / 2); // Apply damage halfway through the animation
-                    if (Math.abs(player.getY() - y) <= 30 && Math.abs(player.getX() - x) <= ATTACK_RANGE) {
-                        player.takeHit(DAMAGE);
-                    }
-
-                    Thread.sleep(attackAnimationTime / 2); // Wait for the rest of the animation
-                } catch (InterruptedException ignored) {}
-
-                isAttacking = false; // Only reset after full animation plays
-            }).start();
+        for (Platform platform : gamePanel.getPlatforms()) {
+            if (platform.getBounds().contains(checkX, checkY)) {
+                return true;
+            }
         }
+        return false;
+    }
+    private void attack(Player player) {
+        if (isAttacking) return;
+
+        isAttacking = true;
+        currentAnimation = "enemy_attack";
+        facingRight = player.getX() > x;
+
+        int attackFrames = animations.get("enemy_attack").size();
+        int attackDuration = attackFrames * animationSpeed * 16;
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(attackDuration / 2); // Midway through animation
+
+                // Check hit again here to ensure player is still in range
+                Rectangle attackRange = new Rectangle(x - ATTACK_RANGE, y, width + 2 * ATTACK_RANGE, height);
+                Rectangle playerBounds = new Rectangle(player.getX(), player.getY(), player.getWidth(), player.getHeight());
+
+                if (!isDead && attackRange.intersects(playerBounds)) {
+                    player.takeHit(DAMAGE);
+                }
+
+                Thread.sleep(attackDuration / 2);
+            } catch (InterruptedException ignored) {}
+
+            isAttacking = false;
+        }).start();
     }
 
     public void takeDamage(int damage) {
@@ -190,30 +239,30 @@ public class Enemy implements Serializable {
         }
     }
 
-    public void render(Graphics g) {
+    public void render(Graphics g, int cameraX) {
         if (isDead) return;
 
-        // Validate animation list
         if (!animations.containsKey(currentAnimation)) return;
 
         List<BufferedImage> frames = animations.get(currentAnimation);
-
-        if (frameIndex < 0 || frameIndex >= frames.size()) return; // Ensure valid index
+        if (frameIndex < 0 || frameIndex >= frames.size()) return;
 
         BufferedImage frame = frames.get(frameIndex);
 
+        int renderX = x - cameraX; // <- Apply camera offset here
+
         // Flip image if facing left
         if (!facingRight) {
-            g.drawImage(frame, x + width, y, -width, height, null);
+            g.drawImage(frame, renderX + width, y, -width, height, null);
         } else {
-            g.drawImage(frame, x, y, width, height, null);
+            g.drawImage(frame, renderX, y, width, height, null);
         }
 
-        // Health bar
+        // Health bar with camera offset
         g.setColor(Color.BLACK);
-        g.drawRect(x, y - 10, width, 5);
+        g.drawRect(renderX, y - 10, width, 5);
         g.setColor(Color.GREEN);
-        g.fillRect(x, y - 10, (int) ((width * (health / 50.0))), 5);
+        g.fillRect(renderX, y - 10, (int) ((width * (health / 50.0))), 5);
     }
 
     public Rectangle getBounds() {

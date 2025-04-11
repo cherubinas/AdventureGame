@@ -16,6 +16,7 @@ public class Player {
     private int dx, dy;
     private boolean onGround;
     private GamePanel gamePanel;
+    private int worldWidth = 3000;
 
     private final int SPEED = 5, JUMP_STRENGTH = -15, GRAVITY = 1;
     private final int DASH_SPEED = 15;
@@ -57,30 +58,40 @@ public class Player {
         HashMap<String, AnimationLoader.AnimationData> animationDataMap = AnimationLoader.loadAllAnimations();
         this.animations = new HashMap<>();
 
+
+
         for (String key : animationDataMap.keySet()) {
             this.animations.put(key, animationDataMap.get(key).frames); // Extract frames only
         }
         ATTACK_FRAMES = animations.containsKey("attack") ? animations.get("attack").size() : 1;
     }
+    public void setWorldWidth(int worldWidth) {
+        this.worldWidth = worldWidth;
+    }
 
-    public void render(Graphics g) {
+    public void render(Graphics g, int cameraX) {
         if (animations.containsKey(currentState)) {
             BufferedImage frame = animations.get(currentState).get(currentFrame);
             int newWidth = (int) (frame.getWidth() * 1.1);
             int newHeight = (int) (frame.getHeight() * 1.1);
 
+            int drawX = x - cameraX;
+
             if (facingRight) {
-                g.drawImage(frame, x, y, newWidth, newHeight, null);
+                g.drawImage(frame, drawX, y, newWidth, newHeight, null);
             } else {
-                g.drawImage(frame, x + newWidth, y, -newWidth, newHeight, null);
+                g.drawImage(frame, drawX + newWidth, y, -newWidth, newHeight, null);
             }
+
+            // Health bar
             g.setColor(Color.BLACK);
-            g.drawRect(x, y - 10, width, 5);
+            g.drawRect(drawX, y - 10, width, 5);
             g.setColor(Color.GREEN);
-            g.fillRect(x, y - 10, (int) ((width * (health / 100.0))), 5);
-            // Draw bounding box (collision box)
-            g.setColor(new Color(255, 0, 0, 250)); // Red with slight transparency
-            g.drawRect(x, y, width, height);
+            g.fillRect(drawX, y - 10, (int) ((width * (health / 100.0))), 5);
+
+            // Bounding box (for debugging)
+            g.setColor(new Color(255, 0, 0, 250));
+            g.drawRect(drawX, y, width, height);
         }
     }
 
@@ -141,7 +152,7 @@ public class Player {
             // Platform collision handling
             for (Platform platform : platforms) {
                 Rectangle platformBounds = platform.getBounds();
-                Rectangle futureBounds = new Rectangle(x, y + velocityY, width, height);
+                Rectangle futureBounds = new Rectangle(x + dx, y + velocityY, width, height);
 
                 if (futureBounds.intersects(platformBounds)) {
                     if (velocityY > 0) { // Falling
@@ -166,6 +177,7 @@ public class Player {
                 onGround = true;
             }
 
+
             // Prevent horizontal movement while colliding with platforms
             x += dx;
             for (Platform platform : platforms) {
@@ -177,7 +189,7 @@ public class Player {
 
             // Boundary checks to prevent going out of bounds
             if (x < 0) x = 0;
-            if (x + width > floor.width) x = floor.width - width;
+            if (x + width > worldWidth) x = worldWidth - width;
         }
 
         if (dashCooldownTimer > 0) {
@@ -204,6 +216,13 @@ public class Player {
             facingRight = false;
             if (!isJumping && !isFalling) currentState = "run";
         }
+    }
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     public void moveRight() {

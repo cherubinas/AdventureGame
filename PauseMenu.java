@@ -25,15 +25,18 @@ public class PauseMenu extends JPanel {
         exitButton = new JButton("Exit");
         resumeButton = new JButton("Resume");
 
-        muteMusicButton = new JToggleButton("Music: ON");
-        muteSfxButton = new JToggleButton("SFX: ON");
+        muteMusicButton = new JToggleButton("Music ON");
+        muteSfxButton = new JToggleButton("SFX ON");
+        muteSfxButton.setSelected(MusicPlayer.areSoundEffectsMuted());
+        muteSfxButton.setText(MusicPlayer.areSoundEffectsMuted() ? "SFX OFF" : "SFX ON");
         volumeSlider = new JSlider(0, 100, (int) (MusicPlayer.getGlobalVolume() * 100));
 
-        makeButtonTransparent(saveButton);
-        makeButtonTransparent(exitButton);
-        makeButtonTransparent(resumeButton);
-        makeToggleButtonStyled(muteMusicButton);
-        makeToggleButtonStyled(muteSfxButton);
+        styleButton(saveButton);
+        styleButton(exitButton);
+        styleButton(resumeButton);
+        styleToggleButton(muteMusicButton);
+        styleToggleButton(muteSfxButton);
+        styleSlider(volumeSlider);
 
         saveButton.addActionListener(e -> saveAction.run());
         exitButton.addActionListener(e -> exitAction.run());
@@ -41,15 +44,20 @@ public class PauseMenu extends JPanel {
 
         muteMusicButton.addActionListener(e -> {
             boolean muted = muteMusicButton.isSelected();
-            muteMusicButton.setText(muted ? "Music: OFF" : "Music: ON");
+            muteMusicButton.setText(muted ? "Music OFF" : "Music ON");
             if (musicPlayer != null) {
                 musicPlayer.setMuted(muted);
+                if (muted) {
+                    musicPlayer.pause();
+                } else {
+                    musicPlayer.resume();
+                }
             }
         });
 
         muteSfxButton.addActionListener(e -> {
             boolean muted = muteSfxButton.isSelected();
-            muteSfxButton.setText(muted ? "SFX: OFF" : "SFX: ON");
+            muteSfxButton.setText(muted ? "SFX OFF" : "SFX ON");
             MusicPlayer.setSoundEffectsMuted(muted);
         });
 
@@ -79,26 +87,70 @@ public class PauseMenu extends JPanel {
 
     public void setMusicPlayer(MusicPlayer player) {
         this.musicPlayer = player;
+        if (musicPlayer != null) {
+            boolean musicMuted = MusicPlayer.getGlobalVolume() == 0 || muteMusicButton.isSelected(); // fallback
+            muteMusicButton.setSelected(musicMuted);
+            muteMusicButton.setText(musicMuted ? "Music OFF" : "Music ON");
+        }
     }
 
-    private void makeButtonTransparent(JButton button) {
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-        button.setBorderPainted(false);
+    private void styleButton(JButton button) {
+        button.setOpaque(true);
+        button.setBackground(Color.BLACK);
         button.setForeground(Color.RED);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
         if (customFont != null) {
             button.setFont(customFont.deriveFont(30f));
         }
+        addHoverEffect(button);
     }
 
-    private void makeToggleButtonStyled(JToggleButton button) {
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-        button.setBorderPainted(false);
-        button.setForeground(Color.ORANGE);
+    private void styleToggleButton(JToggleButton button) {
+        button.setOpaque(true);
+        button.setBackground(Color.BLACK);
+        button.setForeground(Color.RED);
+        button.setFocusPainted(false);
+        button.setIcon(null);
+        button.setSelectedIcon(null);
+        button.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
         if (customFont != null) {
             button.setFont(customFont.deriveFont(24f));
         }
+        addHoverEffect(button);
+    }
+
+    private void styleSlider(JSlider slider) {
+        slider.setOpaque(false);
+        slider.setForeground(Color.RED);
+        slider.setBackground(Color.BLACK);
+        slider.setFocusable(false);
+        slider.setUI(new javax.swing.plaf.metal.MetalSliderUI() {
+            @Override
+            public void paintThumb(Graphics g) {
+                g.setColor(Color.RED);
+                g.fillRect(thumbRect.x, thumbRect.y, thumbRect.width, thumbRect.height);
+            }
+
+            @Override
+            public void paintTrack(Graphics g) {
+                g.setColor(Color.DARK_GRAY);
+                g.fillRect(trackRect.x, trackRect.y + trackRect.height / 2 - 2,
+                        trackRect.width, 4);
+            }
+        });
+    }
+
+    private void addHoverEffect(AbstractButton button) {
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.DARK_GRAY);
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.BLACK);
+            }
+        });
     }
 
     private void loadCustomFont() {
@@ -140,7 +192,7 @@ public class PauseMenu extends JPanel {
         FontMetrics fm = g.getFontMetrics();
         int textWidth = fm.stringWidth(pausedText);
         int textX = (getWidth() - textWidth) / 2;
-        int textY = getHeight() / 3;
+        int textY = getHeight() / 5;
         g.drawString(pausedText, textX, textY);
     }
 }

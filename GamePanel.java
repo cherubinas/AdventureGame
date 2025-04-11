@@ -7,6 +7,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
+import java.util.Random;
 
 public class GamePanel extends JPanel implements KeyListener, ActionListener, MouseListener {
     private final Player player;
@@ -21,20 +22,28 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
     private PauseMenu pauseMenu;
     private JButton resumeButton;
     private Runnable resumeAction;
+    private MusicPlayer backgroundMusicPlayer;
+    private int worldWidth = 3000; // Width of the entire game world
+    private int worldHeight = 600;
+    private int cameraX = 0; // How much the view is offset horizontally
 
     public GamePanel() {
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
         addMouseListener(this);
+        backgroundMusicPlayer = new MusicPlayer("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\kim-lightyear-leave-the-world-tonight-chiptune-edit-loop-132102.mp3"); // Adjust path as needed
+        backgroundMusicPlayer.play(); // Start background music
 
 
         setLayout(null); // Allows manual positioning of components
         // Load background image
         setDoubleBuffered(true);
-        backgroundGif = new ImageIcon("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\photos\\6d13119ec35d038c0649f6f4d5f2b9ad.gif");
+        backgroundGif = new ImageIcon("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\photos\\j1IX2Y.png");
         // Initialize player
-        player = new Player(250, 300, this);
+        player = new Player(100, 300, this);
+        player.setWorldWidth(worldWidth);
+
 
         // Initialize platforms
         platforms = new ArrayList<>();
@@ -43,11 +52,13 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         platforms.add(new Platform(600, 200, 200, 20));
 
         // Initialize floor
-        floor = new Rectangle(0, 500, 800, 50);
+        floor = new Rectangle(0, 500, worldWidth, 50);
+
 
         // Initialize enemies
-        enemies = new ArrayList<>();
-        enemies.add(new Enemy(500, 450, this));
+        enemies = new ArrayList<>(); // 👈 initialize FIRST
+
+        resizePlatforms(worldWidth, worldHeight);
 
         // Initialize game loop
         gameLoop = new Timer(16, this); // Approximately 60 FPS
@@ -59,6 +70,16 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         gameOverScreen.setPreferredSize(new Dimension(getWidth(), getHeight()));
         add(gameOverScreen);
         gameOverScreen.setVisible(false); // Hide it initially
+    }
+    private static BufferedImage platformTexture;
+
+    static {
+        try {
+            platformTexture = ImageIO.read(new File("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\resources\\map\\afb6872a0fbefb737c7636270f3b626b.jpg"));
+        } catch (IOException e) {
+            System.err.println("Failed to load floor/wall texture!");
+            e.printStackTrace();
+        }
     }
 
     public void startNewGame() {
@@ -115,7 +136,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Draw background image
+        // Background
         if (backgroundGif != null) {
             g.drawImage(backgroundGif.getImage(), 0, 0, getWidth(), getHeight(), this);
         }
@@ -124,22 +145,46 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
             gameOverScreen.setVisible(true);
             return;
         }
+        // --- Draw left wall with scaled width ---
+        // --- Draw left wall using a vertical slice of the texture ---
+        if (platformTexture != null) {
+            int sliceWidth = 20; // a narrow piece of the texture
+            int tileH = platformTexture.getHeight();
+            BufferedImage wallSlice = platformTexture.getSubimage(0, 0, sliceWidth, tileH);
 
-        player.render(g);
+            for (int y = 0; y < getHeight(); y += tileH) {
+                g.drawImage(wallSlice, 0 - cameraX, y, null);
+            }
+        } else {
+            g.setColor(Color.DARK_GRAY);
+            g.fillRect(0 - cameraX, 0, 20, getHeight());
+        }
 
-        // Render platforms
+// --- Draw floor ---
+        if (platformTexture != null) {
+            int tileW = platformTexture.getWidth();
+            int tileH = 30;
+            for (int x = floor.x; x < floor.x + floor.width; x += tileW) {
+                g.drawImage(platformTexture, x - cameraX, floor.y, null);
+            }
+        } else {
+            g.setColor(Color.GRAY);
+            g.fillRect(floor.x - cameraX, floor.y, floor.width, floor.height);
+        }
+
+        // Player & world offset
+        player.render(g, cameraX);
+
         for (Platform platform : platforms) {
-            platform.render(g);
+            platform.render(g, cameraX);
         }
 
-        // Render enemies
         for (Enemy enemy : enemies) {
-            enemy.render(g);
+            enemy.render(g, cameraX);
         }
 
-        // Render floor
-        g.setColor(Color.GRAY);
-        g.fillRect(floor.x, floor.y, floor.width, floor.height);
+        // Floor
+
     }
     public void openPauseMenu() {
         if (isPaused) return;
@@ -152,6 +197,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
                 () -> System.exit(0),                          // Quit callback
                 () -> closePauseMenu(frame)                         // Resume callback
         );
+        pauseMenu.setMusicPlayer(backgroundMusicPlayer); // Connects MusicPlayer instance
 
         frame.setContentPane(pauseMenu);
         frame.revalidate();
@@ -222,9 +268,18 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
             for (Enemy enemy : enemies) {
                 enemy.update(player);
             }
+            for (Platform platform : platforms) {
+                platform.update(); // only moves if it's a moving one
+            }
+
+            // 👇 CAMERA follows player
+            cameraX = player.getX() - getWidth() / 2;
+            cameraX = Math.max(0, Math.min(cameraX, worldWidth - getWidth()));
+
             repaint();
         }
     }
+
     public List<Enemy> getEnemies() {
         return enemies;
     }
@@ -257,10 +312,47 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
 
     private void resizePlatforms(int width, int height) {
         platforms.clear();
-        platforms.add(new Platform(width / 4, height - 200, width / 6, 20));
-        platforms.add(new Platform(width / 2, height - 300, width / 6, 20));
-        platforms.add(new Platform((3 * width) / 4, height - 400, width / 6, 20));
+        enemies.clear();
+
+        Random rand = new Random();
+        int numPlatforms = 35;
+        int currentX = 100;
+        int minY = 200;
+        int maxY = 460;
+        int minGapX = 140;
+        int maxGapX = 240;
+
+        while (currentX < worldWidth - 200 && platforms.size() < numPlatforms) {
+            int baseY = rand.nextInt(maxY - minY) + minY;
+            int stackCount = rand.nextDouble() < 0.3 ? 3 : (rand.nextDouble() < 0.6 ? 2 : 1); // 30% triple, 30% double, 40% single
+
+            int stackBaseX = currentX;
+
+            for (int i = 0; i < stackCount; i++) {
+                int y = baseY - (i * 80); // vertical spacing between platforms
+                int horizontalOffset = rand.nextInt(60) - 30; // -30 to +30 px horizontal shift for natural layout
+                int x = stackBaseX + horizontalOffset;
+
+                int platformWidth = rand.nextInt(100) + 140;
+                boolean isMoving = rand.nextDouble() < 0.25;
+
+                Platform platform = new Platform(x, y, platformWidth, 20, isMoving);
+                platforms.add(platform);
+
+                // Enemies only on static platforms
+                if (!isMoving && rand.nextDouble() < 0.5) {
+                    int enemyX = x + platformWidth / 2 - 10;
+                    int enemyY = y - 40;
+                    enemies.add(new Enemy(enemyX, enemyY, this));
+                }
+            }
+
+            int gap = rand.nextInt(maxGapX - minGapX) + minGapX;
+            currentX += rand.nextInt(30) + 140 + gap;
+        }
     }
+
+
     public void setGameOver(boolean gameOver) {
         this.gameOver = gameOver;
         if (gameOver) {
