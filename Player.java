@@ -18,7 +18,7 @@ public class Player {
     private GamePanel gamePanel;
     private int worldWidth = 3000;
 
-    private final int SPEED = 5, JUMP_STRENGTH = -15, GRAVITY = 1;
+    private final int SPEED = 5, JUMP_STRENGTH = -18, GRAVITY = 1;
     private final int DASH_SPEED = 15;
     private final int DASH_DURATION = 10;
     private final int DASH_COOLDOWN = 30;

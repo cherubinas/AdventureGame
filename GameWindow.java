@@ -48,6 +48,8 @@ public class GameWindow {
         if (savedState != null) {
             gamePanel.getPlayer().setHealth(savedState.getPlayerHealth());
             gamePanel.getPlayer().setPosition(savedState.getPlayerX(), savedState.getPlayerY());
+            gamePanel.loadPlatforms(savedState.getPlatformStates()); // ✅ Load platforms first
+            gamePanel.loadEnemies(savedState.getEnemyPositions());
             gamePanel.loadEnemies(savedState.getEnemyPositions());
         }
 
@@ -68,7 +70,9 @@ public class GameWindow {
                     gamePanel.getPlayer().getHealth(),
                     gamePanel.getPlayer().getX(),
                     gamePanel.getPlayer().getY(),
-                    extractEnemyPositions(gamePanel.getEnemies())
+                    extractEnemyPositions(gamePanel.getEnemies()),
+                    extractPlatformStates(gamePanel.getPlatforms())
+
             );
             SaveManager.saveGame(gameState);
         }
@@ -81,5 +85,12 @@ public class GameWindow {
             enemyStates.add(enemy.getState());
         }
         return enemyStates;
+    }
+    public List<Platform.PlatformState> extractPlatformStates(List<Platform> platforms) {
+        List<Platform.PlatformState> platformStates = new ArrayList<>();
+        for (Platform platform : platforms) {
+            platformStates.add(platform.getState());
+        }
+        return platformStates;
     }
 }

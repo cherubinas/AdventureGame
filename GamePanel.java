@@ -23,7 +23,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
     private JButton resumeButton;
     private Runnable resumeAction;
     private MusicPlayer backgroundMusicPlayer;
-    private int worldWidth = 3000; // Width of the entire game world
+    private int worldWidth = 9000; // Width of the entire game world
     private int worldHeight = 600;
     private int cameraX = 0; // How much the view is offset horizontally
 
@@ -89,14 +89,23 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
 
         gameOver = false;
 
-        player.reset(); // <-- Make sure we reset *everything*
+        // 🧼 Clear and reset the player
+        player.reset();
 
+        // 🧼 Clear all platforms and enemies
+        platforms.clear();
         enemies.clear();
-        enemies.add(new Enemy(500, 450, this));
+
+        // ✅ Reinitialize all platforms (and their enemies)
+        resizePlatforms(worldWidth, worldHeight);
+
+        // 👇 Add at least one fallback enemy in case platforms fail
+        if (enemies.isEmpty()) {
+            enemies.add(new Enemy(300, 450, this));
+        }
+
         gameOverScreen.setBounds(0, 0, getWidth(), getHeight());
         gameOverScreen.setPreferredSize(new Dimension(getWidth(), getHeight()));
-
-        add(gameOverScreen);
         gameOverScreen.setVisible(false);
 
         gameLoop = new Timer(16, this);
@@ -115,7 +124,22 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         for (Enemy enemy : enemies) {
             enemyStates.add(enemy.getState());
         }
-        return new GameState(player.getHealth(), player.getX(), player.getY(), enemyStates);
+
+        List<Platform.PlatformState> platformStates = new ArrayList<>();
+        for (Platform platform : platforms) {
+            platformStates.add(platform.getState());
+        }
+
+        return new GameState(player.getHealth(), player.getX(), player.getY(), enemyStates, platformStates);
+    }
+    public void loadPlatforms(List<Platform.PlatformState> platformStates) {
+        platforms.clear();
+        enemies.clear(); // Optional: clear enemies too before placing new ones
+
+        for (Platform.PlatformState state : platformStates) {
+            Platform platform = new Platform(state.getX(), state.getY(), state.getWidth(), state.getHeight(), state.isMoving());
+            platforms.add(platform);
+        }
     }
 
     public void loadEnemies(List<Enemy.EnemyState> enemyStates) {
@@ -315,40 +339,52 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         enemies.clear();
 
         Random rand = new Random();
-        int numPlatforms = 35;
         int currentX = 100;
-        int minY = 200;
-        int maxY = 460;
+        int minY = 240;
+        int maxY = 440;
         int minGapX = 140;
-        int maxGapX = 240;
+        int maxGapX = 220;
 
-        while (currentX < worldWidth - 200 && platforms.size() < numPlatforms) {
+        while (currentX < worldWidth - 200) {
             int baseY = rand.nextInt(maxY - minY) + minY;
-            int stackCount = rand.nextDouble() < 0.3 ? 3 : (rand.nextDouble() < 0.6 ? 2 : 1); // 30% triple, 30% double, 40% single
+            int baseWidth = rand.nextInt(60) + 140;
+            boolean baseMoving = rand.nextDouble() < 0.15;
 
-            int stackBaseX = currentX;
+            Platform basePlatform = new Platform(currentX, baseY, baseWidth, 20, baseMoving);
+            platforms.add(basePlatform);
 
-            for (int i = 0; i < stackCount; i++) {
-                int y = baseY - (i * 80); // vertical spacing between platforms
-                int horizontalOffset = rand.nextInt(60) - 30; // -30 to +30 px horizontal shift for natural layout
-                int x = stackBaseX + horizontalOffset;
+            // Enemy spawn chance scales with progress
+            float progress = (float) currentX / worldWidth;
+            float enemySpawnChance = 0.3f + progress * 0.5f; // 30% to 80%
 
-                int platformWidth = rand.nextInt(100) + 140;
-                boolean isMoving = rand.nextDouble() < 0.25;
+            if (!baseMoving && rand.nextFloat() < enemySpawnChance) {
+                int enemyX = currentX + baseWidth / 2 - 10;
+                int enemyY = baseY - 40;
+                enemies.add(new Enemy(enemyX, enemyY, this));
+            }
 
-                Platform platform = new Platform(x, y, platformWidth, 20, isMoving);
-                platforms.add(platform);
+            // Stack vertically
+            int stackCount = rand.nextInt(4) + 1;
 
-                // Enemies only on static platforms
-                if (!isMoving && rand.nextDouble() < 0.5) {
-                    int enemyX = x + platformWidth / 2 - 10;
-                    int enemyY = y - 40;
+            for (int i = 1; i < stackCount; i++) {
+                int stackY = baseY - i * 80;
+                if (stackY < 180) break;
+
+                int xOffset = rand.nextInt(100) - 50;
+                int stackWidth = Math.max(80, baseWidth - (i * 20));
+
+                Platform stackedPlatform = new Platform(currentX + xOffset, stackY, stackWidth, 20, false);
+                platforms.add(stackedPlatform);
+
+                if (progress > 0.4 && rand.nextFloat() < (0.1f + progress * 0.2f)) {
+                    int enemyX = currentX + xOffset + stackWidth / 2 - 10;
+                    int enemyY = stackY - 40;
                     enemies.add(new Enemy(enemyX, enemyY, this));
                 }
             }
 
             int gap = rand.nextInt(maxGapX - minGapX) + minGapX;
-            currentX += rand.nextInt(30) + 140 + gap;
+            currentX += baseWidth + gap;
         }
     }
 

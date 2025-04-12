@@ -3,19 +3,25 @@ import java.util.List;
 
 public class GameState implements Serializable {
     private static final long serialVersionUID = 1L;
+
     private int playerHealth;
     private int playerX, playerY;
-    private List<Enemy.EnemyState> enemyStates; // Store full enemy states now
+    private List<Enemy.EnemyState> enemyStates;
+    private List<Platform.PlatformState> platformStates; // ✅ New
 
-    public GameState(int playerHealth, int playerX, int playerY, List<Enemy.EnemyState> enemyStates) {
+    public GameState(int playerHealth, int playerX, int playerY,
+                     List<Enemy.EnemyState> enemyStates,
+                     List<Platform.PlatformState> platformStates) { // ✅ New
         this.playerHealth = playerHealth;
         this.playerX = playerX;
         this.playerY = playerY;
         this.enemyStates = enemyStates;
+        this.platformStates = platformStates;
     }
 
     public int getPlayerHealth() { return playerHealth; }
     public int getPlayerX() { return playerX; }
     public int getPlayerY() { return playerY; }
-    public List<Enemy.EnemyState> getEnemyPositions() { return enemyStates; } // Rename for clarity
+    public List<Enemy.EnemyState> getEnemyPositions() { return enemyStates; }
+    public List<Platform.PlatformState> getPlatformStates() { return platformStates; } // ✅
 }

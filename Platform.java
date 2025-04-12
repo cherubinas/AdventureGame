@@ -2,15 +2,17 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import javax.imageio.ImageIO;
 
-public class Platform {
+public class Platform implements Serializable {
     private int x, y, width, height;
     private boolean isMoving;
     private int direction = 1;
     private int speed = 2;
     private int originalX;
     private int range = 100;
+
 
     private static BufferedImage texture;
 
@@ -22,10 +24,35 @@ public class Platform {
             e.printStackTrace();
         }
     }
+    public static class PlatformState implements Serializable {
+        private final int x, y, width, height;
+        private final boolean isMoving;
+
+        public PlatformState(int x, int y, int width, int height, boolean isMoving) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.isMoving = isMoving;
+        }
+
+        public int getX() { return x; }
+        public int getY() { return y; }
+        public int getWidth() { return width; }
+        public int getHeight() { return height; }
+        public boolean isMoving() { return isMoving; }
+    }
 
     public Platform(int x, int y, int width, int height) {
         this(x, y, width, height, false);
     }
+    public PlatformState getState() {
+        return new PlatformState(x, y, width, height, isMoving);
+    }
+    public Platform(PlatformState state) {
+        this(state.getX(), state.getY(), state.getWidth(), state.getHeight(), state.isMoving());
+    }
+
 
     public Platform(int x, int y, int width, int height, boolean isMoving) {
         this.x = x;
