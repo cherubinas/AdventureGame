@@ -36,6 +36,7 @@ public class Player {
     private int attackTimer = 0;
     private int attackFrameIndex = 0;
     private int health = 100;
+    private int attackDamage = 10;
 
     private boolean mousePressed = false;
 
@@ -71,9 +72,16 @@ public class Player {
 
     public void render(Graphics g, int cameraX) {
         if (animations.containsKey(currentState)) {
-            BufferedImage frame = animations.get(currentState).get(currentFrame);
+            List<BufferedImage> frames = animations.get(currentState);
+
+            if (currentFrame >= frames.size()) {
+                currentFrame = 0; // or whatever logic you want (e.g., freeze at last frame)
+            }
+
+            BufferedImage frame = frames.get(currentFrame);
             int newWidth = (int) (frame.getWidth() * 1.1);
             int newHeight = (int) (frame.getHeight() * 1.1);
+
 
             int drawX = x - cameraX;
 
@@ -92,6 +100,14 @@ public class Player {
             // Bounding box (for debugging)
             g.setColor(new Color(255, 0, 0, 250));
             g.drawRect(drawX, y, width, height);
+        }
+    }
+    public void heal(int amount) {
+        if (health < 100) {
+            health = Math.min(100, health + amount);
+            System.out.println("Player healed. Current health: " + health);
+        } else {
+            System.out.println("Player health is already full.");
         }
     }
 
@@ -262,20 +278,31 @@ public class Player {
             currentState = "attack";
             currentFrame = 0;
 
+            int currentDamage = attackDamage; // Use base damage by default
+            if (gamePanel.swordEquipped) {
+                currentDamage = 20; // Increase damage if the stronger sword is equipped
+            }
+
             Rectangle attackHitbox = getAttackHitbox();
             for (Enemy enemy : enemies) {
                 if (attackHitbox.intersects(enemy.getBounds())) {
                     MusicPlayer.playSound("C:\\Users\\eveli\\Desktop\\New folder (3)\\AdventureGame\\lib\\music\\attack.mp3");
-                    enemy.takeDamage(10);
+                    enemy.takeDamage(currentDamage); // Apply the current damage
                 }
             }
         }
     }
 
+    public int getAttackDamage() {
+        return attackDamage; // Make the base attack damage accessible if needed
+    }
     private int hitTimer = 0; // Timer for hit animation duration
 
     public void takeHit(int damage) {
         if (isDead || hitTimer > 0) return; // Prevent multiple triggers
+        if (gamePanel.isArmorEquipped()) {
+            damage = Math.min(damage, 6); // Reduce damage to max of 5
+        }
 
         health -= damage;
         if (health <= 0) {

@@ -26,7 +26,15 @@ public class AnimationLoader {
         addAnimation(animations, "enemy_hurt", basePath + "Skeleton Hit.png", 8, 30, 32, 0);
         addAnimation(animations, "enemy_death", basePath + "Skeleton Dead.png", 15, 33, 32, 0);
         addAnimation(animations, "enemy_react", basePath + "Skeleton React.png", 4, 22, 32, 0);
-
+        // Crow animations
+        addAnimation(animations, "npc_idle", basePath + "Mushroom-idle.png", 7, 80, 64, 0);
+        // Items (from sprite sheet)
+        String itemsPath = basePath + "Pack.png";
+        addItem(animations, "item_sword", itemsPath, 1, 16, 16);
+        addItem(animations, "item_armor", itemsPath, 9, 16, 16);
+        addItem(animations, "item_health_potion", itemsPath, 17, 16, 16);
+        addItem(animations, "item_jump_potion", itemsPath, 19, 16, 16);
+        addItem(animations, "item_key", itemsPath, 22, 16, 16);
         return animations;
     }
 
@@ -81,6 +89,42 @@ public class AnimationLoader {
         }
 
         return frames;
+    }
+    private static void addItem(HashMap<String, AnimationData> animations, String name, String path, int index, int cellWidth, int cellHeight) {
+        ArrayList<BufferedImage> frames = new ArrayList<>();
+        int targetWidth = 50;
+        int targetHeight = 50;
+
+        try {
+            BufferedImage spriteSheet = ImageIO.read(new File(path));
+            int cols = spriteSheet.getWidth() / cellWidth;
+
+            int row = index / cols;
+            int col = index % cols;
+
+            BufferedImage item = spriteSheet.getSubimage(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+
+            // Resize for consistency
+            double scale = (double) targetHeight / cellHeight;
+            int newWidth = (int) (cellWidth * scale);
+            int newHeight = targetHeight;
+            int xOffset = (targetWidth - newWidth) / 2;
+
+            BufferedImage resizedItem = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = resizedItem.createGraphics();
+            g2d.drawImage(item.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH), xOffset, 0, null);
+            g2d.dispose();
+
+            frames.add(resizedItem);
+        } catch (Exception e) {
+            System.out.println("❌ Error loading item '" + name + "': " + e.getMessage());
+        }
+
+        if (!frames.isEmpty()) {
+            animations.put(name, new AnimationData(frames, 0));
+        } else {
+            System.out.println("⚠️ WARNING: Item '" + name + "' failed to load.");
+        }
     }
 
     public static class AnimationData {

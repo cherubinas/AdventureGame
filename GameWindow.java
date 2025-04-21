@@ -66,18 +66,10 @@ public class GameWindow {
     // Save the game progress
     public void saveGameProgress() {
         if (gamePanel != null) {
-            GameState gameState = new GameState(
-                    gamePanel.getPlayer().getHealth(),
-                    gamePanel.getPlayer().getX(),
-                    gamePanel.getPlayer().getY(),
-                    extractEnemyPositions(gamePanel.getEnemies()),
-                    extractPlatformStates(gamePanel.getPlatforms())
-
-            );
+            GameState gameState = gamePanel.createGameState();
             SaveManager.saveGame(gameState);
         }
     }
-
     // Helper method to extract enemy positions
     public List<Enemy.EnemyState> extractEnemyPositions(List<Enemy> enemies) {
         List<Enemy.EnemyState> enemyStates = new ArrayList<>();

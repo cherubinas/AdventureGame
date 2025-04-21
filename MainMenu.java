@@ -134,7 +134,7 @@ public class MainMenu {
         rulesPanel.setBackground(Color.BLACK);
         rulesPanel.setLayout(new BorderLayout());
 
-        JLabel rulesLabel = new JLabel("<html><div style='text-align: center;'>Rules:<br>1. Survive.<br>2. Defeat enemies.<br>3. Find treasures!</div></html>", JLabel.CENTER);
+        JLabel rulesLabel = new JLabel("<html><div style='text-align: center;'>Rules:<br>1. Survive.<br>2. Defeat enemies.<br>3. Find treasures!<br><br>Controls:<br>Mouse click to attack, <font face='Arial'>E</font> to interact, <font face='Arial'>ESC</font> for the main menu and saving, <font face='Arial'>SHIFT</font> to dash</div></html>", JLabel.CENTER);
         if (customFont != null) {
             rulesLabel.setFont(customFont.deriveFont(20.0f)); // Use custom font
         } else {
