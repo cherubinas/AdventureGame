@@ -97,9 +97,7 @@ public class Player {
             g.setColor(Color.GREEN);
             g.fillRect(drawX, y - 10, (int) ((width * (health / 100.0))), 5);
 
-            // Bounding box (for debugging)
-            g.setColor(new Color(255, 0, 0, 250));
-            g.drawRect(drawX, y, width, height);
+
         }
     }
     public void heal(int amount) {

@@ -17,6 +17,7 @@ public class NPC {
     private Rectangle bounds;
     private BufferedImage spriteSheet;
     private Font pixelFont;
+    private boolean showPrompt = false;
 
     public NPC(int x, int y, String spritePath) {
         this.x = x;
@@ -66,13 +67,39 @@ public class NPC {
             frameIndex = (frameIndex + 1) % idleFrames.length;
         }
     }
+    private void drawPromptBox(Graphics g) {
+        int boxX = x - 40;
+        int boxY = y - 50;
+        int boxWidth = 320;
+        int boxHeight = 50;
+
+        // White border
+        g.setColor(Color.WHITE);
+        g.fillRect(boxX - 2, boxY - 2, boxWidth + 4, boxHeight + 4);
+
+        // Black inner box
+        g.setColor(Color.BLACK);
+        g.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Prompt text (smaller font and two lines)
+        g.setColor(Color.WHITE);
+        g.setFont(pixelFont.deriveFont(12f)); // Temporarily smaller font
+
+        g.drawString("Press E to talk", boxX + 10, boxY + 20);
+        g.drawString("Press SPACE or click to continue", boxX + 10, boxY + 35);
+    }
+
 
     public void render(Graphics g, int cameraX) {
         g.drawImage(idleFrames[frameIndex], x - cameraX, y, null);
+        if (showPrompt) {
+            drawPromptBox(g);
+        }
         if (showText) {
             drawTextBox(g);
         }
     }
+
 
     private void drawTextBox(Graphics g) {
         int boxX = 250;
@@ -96,11 +123,14 @@ public class NPC {
 
     public void checkInteraction(Rectangle playerBounds, boolean isEPressed) {
         if (playerBounds.intersects(bounds)) {
+            showPrompt = true;
             if (isEPressed) {
-                showText = true; // Show the dialogue box
+                showText = true;
+                showPrompt = false; // Hide prompt when dialogue starts
             }
         } else {
-            showText = false; // Hide the dialogue box when the player moves away
+            showPrompt = false;
+            showText = false;
         }
     }
 
@@ -110,6 +140,7 @@ public class NPC {
         } else {
             showText = false;
         }
+        showPrompt = false;
     }
 
     public Rectangle getBounds() {
